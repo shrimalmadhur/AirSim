@@ -11,6 +11,7 @@ RecordingFile::RecordingFile(std::vector <std::string> columns)
 {
     this->columns = columns;
 }
+
 void RecordingFile::appendRecord(TArray<uint8>& image_data, const msr::airlib::Kinematics::State* kinematics)
 {
     if (image_data.Num() == 0)
@@ -19,7 +20,11 @@ void RecordingFile::appendRecord(TArray<uint8>& image_data, const msr::airlib::K
     bool imageSavedOk = false;
     FString filePath;
 
-    std::string filename = std::string("img_").append(std::to_string(images_saved_)).append(".png");
+    uint64_t timestamp_millis = static_cast<uint64_t>(msr::airlib::ClockFactory::get()->nowNanos() / 1.0E6);
+    std::string timestamp_millis_string = std::to_string(timestamp_millis);
+
+
+    std::string filename = std::string("img_").append(timestamp_millis_string).append(".png");
 
     try {    
         FString image_file_path = FString(common_utils::FileSystem::combine(image_path_, filename).c_str());
@@ -31,7 +36,7 @@ void RecordingFile::appendRecord(TArray<uint8>& image_data, const msr::airlib::K
     // If render command is complete, save image along with position and orientation
 
     if (imageSavedOk) {
-        writeString(getLine(*kinematics, filename));
+        writeString(getLine(*kinematics, filename, timestamp_millis_string));
 
         UAirBlueprintLib::LogMessage(TEXT("Screenshot saved to:"), filePath, LogDebugLevel::Success);
         images_saved_++;
@@ -50,15 +55,13 @@ void RecordingFile::appendColumnHeader(std::vector <std::string> columns)
     writeString(line);
 }
 
-std::string RecordingFile::getLine(const msr::airlib::Kinematics::State& kinematics, const std::string& image_file_name)
+std::string RecordingFile::getLine(const msr::airlib::Kinematics::State& kinematics, const std::string& image_file_name, const std::string& timestamp_millis)
 {
-    uint64_t timestamp_millis = static_cast<uint64_t>(msr::airlib::ClockFactory::get()->nowNanos() / 1.0E6);
-
     //TODO: because this bug we are using alternative code with stringstream
     //https://answers.unrealengine.com/questions/664905/unreal-crashes-on-two-lines-of-extremely-simple-st.html
 
     std::string line;
-    line.append(std::to_string(timestamp_millis)).append("\t")
+    line.append(timestamp_millis).append("\t")
         .append(std::to_string(kinematics.pose.position.x())).append("\t")
         .append(std::to_string(kinematics.pose.position.y())).append("\t")
         .append(std::to_string(kinematics.pose.position.z())).append("\t")

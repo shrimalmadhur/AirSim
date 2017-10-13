@@ -24,7 +24,7 @@ private:
     void writeString(const std::string& line);
     bool isFileOpen();
     std::string getLogFileFullPath();
-    std::string getLine(const msr::airlib::Kinematics::State& kinematics, const std::string& image_file_name);
+    std::string getLine(const msr::airlib::Kinematics::State& kinematics, const std::string& image_file_name, const std::string& timestamp_millis);
 
 
 private:
